@@ -40,14 +40,6 @@ export default function NameEntryModal({ isOpen, onClose, onSubmit, isLoading, e
           >
             <ArrowLeft className="w-5 h-5 text-zinc-700" />
           </button>
-          <button
-            onClick={handleSubmit}
-            disabled={!name.trim() || isLoading}
-            className="w-10 h-10 rounded-full bg-amber-500 disabled:bg-zinc-300 disabled:cursor-not-allowed flex items-center justify-center touch-manipulation"
-            aria-label="Next"
-          >
-            <ChevronRight className="w-5 h-5 text-black" />
-          </button>
         </div>
 
         <h2 className="text-xl font-bold text-zinc-900 text-center mb-2">Enter your name</h2>
@@ -71,6 +63,17 @@ export default function NameEntryModal({ isOpen, onClose, onSubmit, isLoading, e
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           disabled={isLoading}
         />
+
+        <button
+          onClick={handleSubmit}
+          disabled={!name.trim() || isLoading}
+          className="w-full mt-4 bg-amber-500 hover:bg-amber-600 disabled:bg-zinc-300 disabled:cursor-not-allowed text-black font-bold py-3 px-6 rounded-xl text-lg touch-manipulation transition-colors flex items-center justify-center gap-2"
+          aria-label="Proceed to payment"
+        >
+          <span>Proceed</span>
+          <ChevronRight className="w-5 h-5" />
+        </button>
+
         {isLoading && (
           <div className="mt-4 text-center text-zinc-500 text-sm">
             Placing your order...

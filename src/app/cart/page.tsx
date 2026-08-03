@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import NameEntryModal from "@/components/NameEntryModal";
 import StripePaymentModal from "@/components/StripePaymentModal";
 import { createPaymentIntent } from "@/lib/api";
+import CartIcon from "@/components/CartIcon";
 
 export default function CartPage() {
   const router = useRouter();
@@ -175,20 +176,11 @@ export default function CartPage() {
           <ArrowLeft className="w-6 h-6 text-white" />
         </button>
         <h1 className="text-xl font-bold text-white tracking-widest">LOGO</h1>
-        <button
+        <CartIcon
+          iconType="close"
           onClick={handleAddMoreItems}
-          className="w-10 h-10 flex items-center justify-center relative"
-          aria-label={`Cart, ${getItemCount()} items`}
-        >
-          <span className="relative">
-            <X className="w-6 h-6 text-white" />
-            {getItemCount() > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                {getItemCount() > 99 ? "99+" : getItemCount()}
-              </span>
-            )}
-          </span>
-        </button>
+          className="w-10 h-10"
+        />
       </div>
 
       <div className="p-6 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">

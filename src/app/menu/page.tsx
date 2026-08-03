@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { ShoppingCart } from "lucide-react";
 import OrderTypeModal from "@/components/OrderTypeModal";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
 import { fetchCategories, fetchProducts, ApiCategory, ApiProduct } from "@/lib/api";
+import CartIcon from "@/components/CartIcon";
 
 export default function MenuPage() {
   const router = useRouter();
@@ -128,18 +128,11 @@ export default function MenuPage() {
               </button>
             ))}
           </div>
-          <button
+          <CartIcon
+            iconType="cart"
             onClick={() => router.push("/cart")}
-            className="relative w-12 h-12 flex items-center justify-center"
-            aria-label={`Cart, ${getItemCount()} items`}
-          >
-            <ShoppingCart className="w-7 h-7 text-zinc-900" />
-            {getItemCount() > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                {getItemCount() > 99 ? "99+" : getItemCount()}
-              </span>
-            )}
-          </button>
+            className="w-12 h-12"
+          />
         </div>
 
         <div className="p-6 max-w-7xl mx-auto grid grid-cols-5 gap-6">
