@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import OrderTypeModal from "@/components/OrderTypeModal";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
@@ -11,14 +10,6 @@ import CartIcon from "@/components/CartIcon";
 
 export default function MenuPage() {
   const router = useRouter();
-  const [showModal, setShowModal] = useState(() => {
-    if (typeof window !== "undefined") {
-      const stored = sessionStorage.getItem("orderType");
-      return !stored;
-    }
-    return true;
-  });
-
   const [categories, setCategories] = useState<ApiCategory[]>([]);
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
@@ -27,7 +18,7 @@ export default function MenuPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { getItemCount, setOrderType, orderType } = useCart();
+  const { getItemCount, orderType } = useCart();
 
   const loadMenu = async () => {
     setLoading(true);
@@ -71,12 +62,6 @@ export default function MenuPage() {
       active = false;
     };
   }, []);
-
-  const handleOrderTypeSelect = (type: "eat-in" | "take-away") => {
-    setShowModal(false);
-    setOrderType(type);
-    console.log(`Order type selected: ${type}`);
-  };
 
   const filteredProducts = products.filter(
     (p) => p.category._id === activeCategoryId
@@ -165,11 +150,6 @@ export default function MenuPage() {
           )}
         </div>
       </div>
-
-      <OrderTypeModal
-        isOpen={showModal}
-        onSelect={handleOrderTypeSelect}
-      />
 
       <ProductDetailModal
         key={selectedProduct?._id || "empty"}
