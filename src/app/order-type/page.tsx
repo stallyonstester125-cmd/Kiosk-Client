@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 
+const poppinsFont = { fontFamily: "var(--font-poppins)" };
+
 export default function OrderTypePage() {
   const router = useRouter();
   const { setOrderType } = useCart();
@@ -24,14 +26,14 @@ export default function OrderTypePage() {
         sizes="100vw"
       />
       <div className="relative z-10 flex flex-col h-full items-center px-6 pt-8 pb-20">
-        <p className="text-zinc-500 text-sm font-medium mb-8 w-full text-left">
+        <p className="text-zinc-500 text-sm font-medium mb-8 w-full text-left" style={poppinsFont}>
           dine in / Take away
         </p>
         <div className="flex-1 flex flex-col items-center justify-center text-center w-full max-w-xs">
-          <h1 className="font-poppins font-semibold text-2xl text-zinc-900 mb-3 leading-tight">
+          <h1 className="font-semibold text-2xl text-zinc-900 mb-3 leading-tight" style={poppinsFont}>
             Welcome! Let&apos;s get started
           </h1>
-          <p className="font-poppins text-base text-zinc-600 mb-8 leading-relaxed max-w-xs mx-auto">
+          <p className="text-base text-zinc-600 mb-8 leading-relaxed max-w-xs mx-auto" style={poppinsFont}>
             On the go? We&apos;ll have your meal ready for you to take away
           </p>
           <div className="flex gap-4 w-full max-w-md">
@@ -47,10 +49,10 @@ export default function OrderTypePage() {
                 height={56}
                 className="mb-4"
               />
-              <span className="font-poppins font-semibold text-base text-zinc-900 mb-1">
+              <span className="font-semibold text-base text-zinc-900 mb-1 block" style={poppinsFont}>
                 Dine In
               </span>
-              <p className="font-poppins text-xs text-zinc-500 text-center leading-relaxed">
+              <p className="text-xs text-zinc-500 text-center leading-relaxed" style={poppinsFont}>
                 Relax and enjoy your meal in our comfortable seating area.
               </p>
             </button>
@@ -66,10 +68,10 @@ export default function OrderTypePage() {
                 height={56}
                 className="mb-4"
               />
-              <span className="font-poppins font-semibold text-base text-zinc-900 mb-1">
+              <span className="font-semibold text-base text-zinc-900 mb-1 block" style={poppinsFont}>
                 Take away
               </span>
-              <p className="font-poppins text-xs text-zinc-500 text-center leading-relaxed">
+              <p className="text-xs text-zinc-500 text-center leading-relaxed" style={poppinsFont}>
                 On the go? We&apos;ll have your meal ready for you to take away.
               </p>
             </button>
