@@ -26,9 +26,6 @@ export default function OrderTypePage() {
         sizes="100vw"
       />
       <div className="relative z-10 flex flex-col h-full items-center px-6 pt-8 pb-20">
-        <p className="text-zinc-500 text-sm font-medium mb-8 w-full text-left" style={poppinsFont}>
-          dine in / Take away
-        </p>
         <div className="flex-1 flex flex-col items-center justify-center text-center w-full max-w-xs">
           <h1 className="font-semibold text-2xl text-zinc-900 mb-3 leading-tight" style={poppinsFont}>
             Welcome! Let&apos;s get started
