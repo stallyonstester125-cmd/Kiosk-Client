@@ -35,7 +35,7 @@ interface CartContextType {
   getItemCount: () => number;
   orderType: "eat-in" | "take-away" | null;
   setOrderType: (type: "eat-in" | "take-away") => void;
-  placeOrder: (customerName: string, paymentMethod: "cash" | "split") => Promise<{ success: boolean; data: any }>;
+  placeOrder: (customerName: string, paymentMethod: "cash" | "card", paymentStatus?: "pending" | "paid" | "failed") => Promise<{ success: boolean; data: Record<string, unknown> }>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -109,7 +109,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const getItemCount = () =>
     state.items.reduce((sum, item) => sum + item.quantity, 0);
 
-  const placeOrder = async (customerName: string, paymentMethod: "cash" | "split" = "cash") => {
+  const placeOrder = async (
+    customerName: string,
+    paymentMethod: "cash" | "card" = "cash",
+    paymentStatus?: "pending" | "paid" | "failed"
+  ) => {
     const { createOrder } = await import("@/lib/api");
 
     const items = state.items.map((item) => ({
@@ -130,7 +134,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       orderType: orderType!,
       customerName,
       items,
-      paymentMethod
+      paymentMethod,
+      ...(paymentStatus ? { paymentStatus } : {})
     });
 
     if (response.success) {

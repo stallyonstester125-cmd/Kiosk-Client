@@ -6,13 +6,33 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import NameEntryModal from "@/components/NameEntryModal";
+import StripePaymentModal from "@/components/StripePaymentModal";
+import { createPaymentIntent } from "@/lib/api";
 
 export default function CartPage() {
   const router = useRouter();
-  const { state, getSubtotal, getTax, getTotal, getItemCount, updateQuantity, removeFromCart, orderType, placeOrder } = useCart();
+  const {
+    state,
+    getSubtotal,
+    getTax,
+    getTotal,
+    getItemCount,
+    updateQuantity,
+    removeFromCart,
+    orderType,
+    placeOrder,
+  } = useCart();
+
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("card");
   const [showNameModal, setShowNameModal] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
+
+  // Stripe modal state
+  const [showStripeModal, setShowStripeModal] = useState(false);
+  const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
+  const [stripeAmount, setStripeAmount] = useState(0);
+  const [pendingCustomerName, setPendingCustomerName] = useState("");
 
   const handleQuantityChange = (id: string, quantity: number) => {
     if (quantity <= 0) {
@@ -28,29 +48,112 @@ export default function CartPage() {
 
   const handleContinueToPayment = () => {
     if (state.items.length === 0) return;
+    setOrderError(null);
     setShowNameModal(true);
   };
 
+  /** Called by NameEntryModal after the customer enters their name */
   const handleNameSubmit = async (name: string) => {
     if (!orderType) {
       setOrderError("Please select an order type first");
       return;
     }
-    setIsPlacingOrder(true);
+
     setOrderError(null);
+
+    if (paymentMethod === "cash") {
+      // ── CASH FLOW: unchanged behaviour ──────────────────────────────────
+      setIsPlacingOrder(true);
+      try {
+        const response = await placeOrder(name, "cash");
+        if (response.success) {
+          const data = response.data as {
+            _id: string;
+            orderNumber: string;
+            total: number;
+            subtotal: number;
+            tax: number;
+          };
+          router.push(
+            `/confirmation?orderId=${data._id}&orderNumber=${data.orderNumber}&total=${data.total}&subtotal=${data.subtotal}&tax=${data.tax}`
+          );
+        } else {
+          setOrderError("Failed to place order. Please try again.");
+        }
+      } catch (error) {
+        setOrderError(error instanceof Error ? error.message : "Failed to place order");
+      } finally {
+        setIsPlacingOrder(false);
+        setShowNameModal(false);
+      }
+    } else {
+      // ── CARD FLOW: create PaymentIntent → show Stripe modal ─────────────
+      setIsPlacingOrder(true);
+      try {
+        const cartItems = state.items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          customizations: item.selectedCustomizations.map((c) => ({
+            groupId: c.groupTitle,
+            groupTitle: c.groupTitle,
+            options: [{ id: c.optionName, name: c.optionName, priceAdd: c.priceAdd }],
+          })),
+        }));
+
+        const { clientSecret, amount } = await createPaymentIntent({
+          orderType,
+          customerName: name,
+          items: cartItems,
+        });
+
+        setPendingCustomerName(name);
+        setStripeClientSecret(clientSecret);
+        setStripeAmount(amount);
+        setShowNameModal(false);
+        setShowStripeModal(true);
+      } catch (error) {
+        setOrderError(
+          error instanceof Error ? error.message : "Failed to prepare payment"
+        );
+      } finally {
+        setIsPlacingOrder(false);
+      }
+    }
+  };
+
+  /** Called by StripePaymentModal after stripe.confirmCardPayment() succeeds */
+  const handlePaymentSuccess = async () => {
+    setShowStripeModal(false);
+    setIsPlacingOrder(true);
     try {
-      const response = await placeOrder(name, "cash");
+      const response = await placeOrder(pendingCustomerName, "card", "paid");
       if (response.success) {
-        router.push(`/confirmation?orderId=${response.data._id}&orderNumber=${response.data.orderNumber}&total=${response.data.total}&subtotal=${response.data.subtotal}&tax=${response.data.tax}`);
+        const data = response.data as {
+          _id: string;
+          orderNumber: string;
+          total: number;
+          subtotal: number;
+          tax: number;
+        };
+        router.push(
+          `/confirmation?orderId=${data._id}&orderNumber=${data.orderNumber}&total=${data.total}&subtotal=${data.subtotal}&tax=${data.tax}`
+        );
       } else {
-        setOrderError("Failed to place order. Please try again.");
+        setOrderError("Payment succeeded but order creation failed. Please contact staff.");
       }
     } catch (error) {
-      setOrderError(error instanceof Error ? error.message : "Failed to place order");
+      setOrderError(
+        error instanceof Error ? error.message : "Order creation failed after payment"
+      );
     } finally {
       setIsPlacingOrder(false);
-      setShowNameModal(false);
     }
+  };
+
+  const handleStripeClose = () => {
+    setShowStripeModal(false);
+    setStripeClientSecret(null);
+    setPendingCustomerName("");
   };
 
   const subtotal = getSubtotal();
@@ -165,16 +268,31 @@ export default function CartPage() {
             + Add more items
           </button>
 
+          {/* Payment method — now controlled state */}
           <div className="mt-6 p-4 bg-white rounded-xl shadow-md">
             <h3 className="font-bold text-zinc-900 mb-4">Payment Method</h3>
             <div className="space-y-3">
               <label className="flex items-center gap-3 p-3 border border-zinc-200 rounded-lg cursor-pointer hover:bg-zinc-50 touch-manipulation">
-                <input type="radio" name="payment" value="cash" className="w-5 h-5 text-amber-500 border-zinc-300 focus:ring-amber-500" defaultChecked />
+                <input
+                  type="radio"
+                  name="payment"
+                  value="cash"
+                  checked={paymentMethod === "cash"}
+                  onChange={() => setPaymentMethod("cash")}
+                  className="w-5 h-5 text-amber-500 border-zinc-300 focus:ring-amber-500"
+                />
                 <span className="font-medium text-zinc-900">Cash</span>
               </label>
-              <label className="flex items-center gap-3 p-3 border border-zinc-200 rounded-lg cursor-pointer hover:bg-zinc-50 touch-manipulation">
-                <input type="radio" name="payment" value="split" className="w-5 h-5 text-amber-500 border-zinc-300 focus:ring-amber-500" />
-                <span className="font-medium text-zinc-900">Split Payment</span>
+              <label className="flex items-center gap-3 p-3 border border-amber-300 rounded-lg cursor-pointer bg-amber-50 hover:bg-amber-100 touch-manipulation">
+                <input
+                  type="radio"
+                  name="payment"
+                  value="card"
+                  checked={paymentMethod === "card"}
+                  onChange={() => setPaymentMethod("card")}
+                  className="w-5 h-5 text-amber-500 border-zinc-300 focus:ring-amber-500"
+                />
+                <span className="font-medium text-zinc-900">Card</span>
               </label>
             </div>
           </div>
@@ -203,25 +321,48 @@ export default function CartPage() {
                 <span>Total</span>
                 <span>{formatPrice(total)}</span>
               </div>
+
+              {orderError && (
+                <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm text-center">
+                  {orderError}
+                </div>
+              )}
+
               <button
                 onClick={handleContinueToPayment}
                 disabled={state.items.length === 0 || isPlacingOrder}
                 className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-zinc-300 disabled:cursor-not-allowed text-black font-bold py-4 px-6 rounded-xl text-lg touch-manipulation transition-colors"
               >
-                {isPlacingOrder ? "Placing Order..." : "Continue to payment"}
+                {isPlacingOrder ? "Processing…" : "Continue to payment"}
               </button>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Name entry modal — always present */}
       <NameEntryModal
         isOpen={showNameModal}
-        onClose={() => setShowNameModal(false)}
+        onClose={() => {
+          setShowNameModal(false);
+          setOrderError(null);
+        }}
         onSubmit={handleNameSubmit}
         isLoading={isPlacingOrder}
         error={orderError}
       />
+
+      {/* Stripe payment modal — shown only for card payments */}
+      {stripeClientSecret && (
+        <StripePaymentModal
+          isOpen={showStripeModal}
+          clientSecret={stripeClientSecret}
+          amount={stripeAmount}
+          customerName={pendingCustomerName}
+          onSuccess={handlePaymentSuccess}
+          onClose={handleStripeClose}
+        />
+      )}
     </div>
   );
-};
+}
