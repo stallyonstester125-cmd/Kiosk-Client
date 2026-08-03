@@ -23,7 +23,7 @@ export default function WelcomeScreen() {
         priority
         sizes="100vw"
       />
-      <div className="relative z-10 absolute inset-0 flex flex-col items-center justify-end pb-24">
+      <div className="relative z-10 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[40%]">
         <Image
           src="/images/logo.svg"
           alt="QuickCrave - FAST FOOD. BIG CRAVINGS."
