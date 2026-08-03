@@ -11,7 +11,13 @@ import { fetchCategories, fetchProducts, ApiCategory, ApiProduct } from "@/lib/a
 
 export default function MenuPage() {
   const router = useRouter();
-  const [showModal, setShowModal] = useState(true);
+  const [showModal, setShowModal] = useState(() => {
+    if (typeof window !== "undefined") {
+      const stored = sessionStorage.getItem("orderType");
+      return !stored;
+    }
+    return true;
+  });
 
   const [categories, setCategories] = useState<ApiCategory[]>([]);
   const [products, setProducts] = useState<ApiProduct[]>([]);
@@ -21,7 +27,7 @@ export default function MenuPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { getItemCount, setOrderType } = useCart();
+  const { getItemCount, setOrderType, orderType } = useCart();
 
   const loadMenu = async () => {
     setLoading(true);

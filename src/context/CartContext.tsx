@@ -35,6 +35,7 @@ interface CartContextType {
   getItemCount: () => number;
   orderType: "eat-in" | "take-away" | null;
   setOrderType: (type: "eat-in" | "take-away") => void;
+  clearOrderType: () => void;
   placeOrder: (customerName: string, paymentMethod: "cash" | "card", paymentStatus?: "pending" | "paid" | "failed") => Promise<{ success: boolean; data: Record<string, unknown> }>;
 }
 
@@ -63,7 +64,17 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
-  const [orderType, setOrderType] = useState<"eat-in" | "take-away" | null>(null);
+  
+  // Initialize orderType from sessionStorage if available
+  const [orderType, setOrderType] = useState<"eat-in" | "take-away" | null>(() => {
+    if (typeof window !== "undefined") {
+      const stored = sessionStorage.getItem("orderType");
+      if (stored === "eat-in" || stored === "take-away") {
+        return stored;
+      }
+    }
+    return null;
+  });
 
   const addToCart = (
     product: { _id: string; name: string; price: number; image: string },
@@ -97,6 +108,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = () => {
     dispatch({ type: "CLEAR_CART" });
+  };
+
+  const setOrderTypeWithPersistence = (type: "eat-in" | "take-away") => {
+    setOrderType(type);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("orderType", type);
+    }
+  };
+
+  const clearOrderType = () => {
+    setOrderType(null);
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("orderType");
+    }
   };
 
   const getSubtotal = () =>
@@ -140,6 +165,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     if (response.success) {
       clearCart();
+      clearOrderType();
     }
 
     return response;
@@ -159,7 +185,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         getTotal,
         getItemCount,
         orderType,
-        setOrderType,
+        setOrderType: setOrderTypeWithPersistence,
+        clearOrderType,
         placeOrder
       }}
     >

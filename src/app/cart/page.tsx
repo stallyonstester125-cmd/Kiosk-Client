@@ -268,34 +268,37 @@ export default function CartPage() {
             + Add more items
           </button>
 
-          {/* Payment method — now controlled state */}
-          <div className="mt-6 p-4 bg-white rounded-xl shadow-md">
-            <h3 className="font-bold text-zinc-900 mb-4">Payment Method</h3>
-            <div className="space-y-3">
-              <label className="flex items-center gap-3 p-3 border border-zinc-200 rounded-lg cursor-pointer hover:bg-zinc-50 touch-manipulation">
-                <input
-                  type="radio"
-                  name="payment"
-                  value="cash"
-                  checked={paymentMethod === "cash"}
-                  onChange={() => setPaymentMethod("cash")}
-                  className="w-5 h-5 text-amber-500 border-zinc-300 focus:ring-amber-500"
-                />
-                <span className="font-medium text-zinc-900">Cash</span>
-              </label>
-              <label className="flex items-center gap-3 p-3 border border-amber-300 rounded-lg cursor-pointer bg-amber-50 hover:bg-amber-100 touch-manipulation">
-                <input
-                  type="radio"
-                  name="payment"
-                  value="card"
-                  checked={paymentMethod === "card"}
-                  onChange={() => setPaymentMethod("card")}
-                  className="w-5 h-5 text-amber-500 border-zinc-300 focus:ring-amber-500"
-                />
-                <span className="font-medium text-zinc-900">Card</span>
-              </label>
-            </div>
-          </div>
+          {state.items.length > 0 && (
+            <>
+              <div className="mt-6 p-4 bg-white rounded-xl shadow-md">
+                <h3 className="font-bold text-zinc-900 mb-4">Payment Method</h3>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 p-3 border border-zinc-200 rounded-lg cursor-pointer hover:bg-zinc-50 touch-manipulation">
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="cash"
+                      checked={paymentMethod === "cash"}
+                      onChange={() => setPaymentMethod("cash")}
+                      className="w-5 h-5 text-amber-500 border-zinc-300 focus:ring-amber-500"
+                    />
+                    <span className="font-medium text-zinc-900">Cash</span>
+                  </label>
+                  <label className="flex items-center gap-3 p-3 border border-amber-300 rounded-lg cursor-pointer bg-amber-50 hover:bg-amber-100 touch-manipulation">
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="card"
+                      checked={paymentMethod === "card"}
+                      onChange={() => setPaymentMethod("card")}
+                      className="w-5 h-5 text-amber-500 border-zinc-300 focus:ring-amber-500"
+                    />
+                    <span className="font-medium text-zinc-900">Card</span>
+                  </label>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="lg:col-span-1">
