@@ -1,10 +1,20 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function WelcomeScreen() {
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push("/menu");
+  };
+
   return (
-    <div className="relative w-screen h-screen bg-white overflow-hidden">
+    <div
+      className="relative w-screen h-screen bg-white overflow-hidden cursor-pointer"
+      onClick={handleClick}
+    >
       <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
         <Image
           src="/images/logo.svg"
