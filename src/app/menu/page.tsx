@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
 import { fetchCategories, fetchProducts, ApiCategory, ApiProduct } from "@/lib/api";
-import CartIcon from "@/components/CartIcon";
+import Header from "@/components/menu/Header";
+import HeroBanner from "@/components/menu/HeroBanner";
+import CategoryQuickSelect from "@/components/menu/CategoryQuickSelect";
+import ProductGrid from "@/components/menu/ProductGrid";
 
 export default function MenuPage() {
   const router = useRouter();
@@ -93,63 +95,39 @@ export default function MenuPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen w-screen bg-[#FFF8F0]">
-      <div className="relative">
-        <div
-          className="w-full h-[63px] bg-[#FFA600] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center justify-between px-6"
-        >
-          <div className="flex gap-6 overflow-x-auto">
-            {categories.map((cat) => (
-              <button
-                key={cat._id}
-                onClick={() => setActiveCategoryId(cat._id)}
-                className={`whitespace-nowrap text-base font-medium transition-colors ${activeCategoryId === cat._id
-                    ? "font-bold text-zinc-900 border-b-2 border-zinc-900 pb-1"
-                    : "text-zinc-800/80 hover:text-zinc-900"
-                  }`}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
-          <CartIcon
-            iconType="cart"
-            onClick={() => router.push("/cart")}
-            className="w-12 h-12"
-          />
-        </div>
+  // TODO: Use actual promotional database campaign data when API supports it.
+  // Fallback to the first product of the active category as requested.
+  const promoProduct = filteredProducts[0];
+  const promoTitle = promoProduct ? promoProduct.name : "Fresh & Delicious";
+  const promoSubtitle = promoProduct
+    ? promoProduct.description
+    : "Explore our premium selection of kiosk meals made fresh for you everyday.";
+  const promoImage = promoProduct ? promoProduct.image : "";
+  const promoBadge = promoProduct ? `$${promoProduct.price.toFixed(2)}` : "Special";
 
-        <div className="p-6 max-w-7xl mx-auto grid grid-cols-5 gap-6">
-          {filteredProducts.map((product) => (
-            <article
-              key={product._id}
-              onClick={() => openProductDetail(product)}
-              className="bg-white rounded-xl shadow-md p-4 flex flex-col hover:shadow-lg transition-shadow cursor-pointer touch-manipulation"
-            >
-              <div className="relative w-full aspect-square mb-3 rounded-lg overflow-hidden bg-zinc-100">
-                <Image
-                  src={product.image}
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
-                />
-              </div>
-              <h3 className="font-bold text-zinc-900 text-base mb-1">{product.name}</h3>
-              <p className="text-sm text-zinc-500 line-clamp-3 mb-2 flex-1">
-                {product.description}
-              </p>
-              <div className="font-bold text-zinc-900 text-lg">${product.price.toFixed(2)}</div>
-            </article>
-          ))}
-          {filteredProducts.length === 0 && (
-            <div className="col-span-5 text-center text-zinc-500 py-12 text-lg">
-              No products in this category yet.
-            </div>
-          )}
-        </div>
-      </div>
+  return (
+    <div className="min-h-screen w-screen bg-[#FFF8F0] flex flex-col">
+      <Header onCartClick={() => router.push("/cart")} />
+
+      <main className="flex-1 max-w-md mx-auto w-full flex flex-col">
+        <HeroBanner
+          title={promoTitle}
+          subtitle={promoSubtitle}
+          image={promoImage}
+          badgeText={promoBadge}
+        />
+
+        <CategoryQuickSelect
+          categories={categories}
+          activeCategoryId={activeCategoryId}
+          onSelect={setActiveCategoryId}
+        />
+
+        <ProductGrid
+          products={filteredProducts}
+          onProductClick={openProductDetail}
+        />
+      </main>
 
       <ProductDetailModal
         key={selectedProduct?._id || "empty"}
