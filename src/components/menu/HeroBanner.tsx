@@ -7,7 +7,11 @@ export default function HeroBanner({ className }: { className?: string }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const dragStartRef = useRef({ x: 0, slide: 0 });
+  const [dragOffset, setDragOffset] = useState(0);
+  
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dragStartRef = useRef({ x: 0, slide: 0, offset: 0 });
+  const autoSlideTimerRef = useRef<number | undefined>(undefined);
 
   const slides = [
     { src: "/images/hero.png", alt: "Kiosk Promo 1" },
@@ -24,55 +28,138 @@ export default function HeroBanner({ className }: { className?: string }) {
 
   // Auto-slide effect
   useEffect(() => {
-    const interval = setInterval(() => {
-      setIsAnimating(true);
-      setCurrentSlide((prev) => (prev + 1) % 2);
-      setTimeout(() => setIsAnimating(false), 500);
+    autoSlideTimerRef.current = window.setInterval(() => {
+      if (!isDragging) {
+        setIsAnimating(true);
+        setCurrentSlide((prev) => (prev + 1) % slides.length);
+        setTimeout(() => setIsAnimating(false), 500);
+      }
     }, 5000);
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      if (autoSlideTimerRef.current !== undefined) {
+        clearInterval(autoSlideTimerRef.current);
+      }
+    };
+  }, [isDragging, slides.length]);
 
   const goToSlide = useCallback((index: number) => {
-    if (!isAnimating) {
+    if (!isAnimating && !isDragging) {
       setIsAnimating(true);
       setCurrentSlide(index);
+      setDragOffset(0);
       setTimeout(() => setIsAnimating(false), 500);
     }
-  }, [isAnimating]);
+  }, [isAnimating, isDragging]);
 
   // Mouse drag handlers
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.button !== 0) return; // Only left mouse button
+    if (e.button !== 0) return;
     
     setIsDragging(true);
-    setCurrentSlide(prev => {
-      // Calculate current slide based on drag start
-      return currentSlide;
-    });
+    setIsAnimating(false);
+    dragStartRef.current = {
+      x: e.clientX,
+      slide: currentSlide,
+      offset: 0
+    };
+    setDragOffset(0);
+    
+    // Pause auto-slide
+    if (autoSlideTimerRef.current !== undefined) {
+      clearInterval(autoSlideTimerRef.current);
+    }
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isDragging) return;
-    // We'll handle drag by updating a drag offset state
+    
+    const deltaX = e.clientX - dragStartRef.current.x;
+    const containerWidth = containerRef.current?.offsetWidth || 600;
+    const offsetPercent = (deltaX / containerWidth) * 100;
+    
+    // Clamp offset to prevent overscroll
+    const clampedOffset = Math.min(Math.max(offsetPercent, -100), 100);
+    setDragOffset(clampedOffset);
   };
 
   const handleMouseUp = () => {
-    if (isDragging) {
-      // Snap to nearest slide on release
+    if (!isDragging) return;
+    
+    const threshold = 15; // 15% threshold to change slide
+    
+    let newSlide = currentSlide;
+    
+    if (dragOffset < -threshold) {
+      // Dragged left - go to next slide
+      newSlide = Math.min(currentSlide + 1, slides.length - 1);
+    } else if (dragOffset > threshold) {
+      // Dragged right - go to previous slide
+      newSlide = Math.max(currentSlide - 1, 0);
     }
+    
+    setIsDragging(false);
+    setDragOffset(0);
+    setCurrentSlide(newSlide);
+    
+    // Restart auto-slide
+    if (autoSlideTimerRef.current !== undefined) {
+      clearInterval(autoSlideTimerRef.current);
+    }
+    autoSlideTimerRef.current = window.setInterval(() => {
+      if (!isDragging) {
+        setIsAnimating(true);
+        setCurrentSlide((prev) => (prev + 1) % slides.length);
+        setTimeout(() => setIsAnimating(false), 500);
+      }
+    }, 5000);
+  };
+
+  const handleMouseLeave = () => {
+    if (isDragging) {
+      const threshold = 15;
+      let newSlide = currentSlide;
+      
+      if (dragOffset < -threshold) {
+        newSlide = Math.min(currentSlide + 1, slides.length - 1);
+      } else if (dragOffset > threshold) {
+        newSlide = Math.max(currentSlide - 1, 0);
+      }
+      
+      setIsDragging(false);
+      setDragOffset(0);
+      setCurrentSlide(newSlide);
+    }
+  };
+
+  // Calculate transform with drag offset
+  const getTransform = () => {
+    if (isDragging) {
+      const baseOffset = currentSlide * 100;
+      return `translateX(calc(-${baseOffset}% + ${dragOffset}%))`;
+    }
+    return `translateX(-${currentSlide * 100}%)`;
   };
 
   return (
     <div className={`relative overflow-hidden rounded-2xl shadow-lg my-4 aspect-[16/9] ${className ?? ""}`}>
       <div
-        className="relative w-full h-full flex"
-        style={{ transform: `translateX(-${100 * currentSlide}%)`, transition: "transform 500ms ease-out" }}
-        onMouseDown={(e) => {
-          if (e.button !== 0) return;
+        ref={containerRef}
+        className="relative w-full h-full flex cursor-grab active:cursor-grabbing select-none"
+        style={{
+          transform: getTransform(),
+          transition: isDragging ? "none" : "transform 500ms ease-out"
         }}
-        onMouseUp={() => {}}
-        onMouseLeave={() => {}}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        onMouseEnter={() => {
+          // Pause auto-slide when mouse enters
+          if (autoSlideTimerRef.current !== undefined) {
+            clearInterval(autoSlideTimerRef.current);
+          }
+        }}
       >
         {slides.map((slide, index) => (
           <div
@@ -98,9 +185,10 @@ export default function HeroBanner({ className }: { className?: string }) {
           <button
             key={index}
             onClick={() => {
-              if (!isAnimating) {
+              if (!isAnimating && !isDragging) {
                 setIsAnimating(true);
                 setCurrentSlide(index);
+                setDragOffset(0);
                 setTimeout(() => setIsAnimating(false), 500);
               }
             }}
