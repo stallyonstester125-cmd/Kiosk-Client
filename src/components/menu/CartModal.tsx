@@ -116,7 +116,8 @@ export default function CartModal({ isOpen, onClose, onProceedToPayment }: CartM
           <button
             onClick={onProceedToPayment}
             disabled={state.items.length === 0}
-            className="mt-4 w-full bg-[#FFA600] hover:bg-[#F5511E] disabled:bg-zinc-300 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-full text-base touch-manipulation transition-colors flex items-center justify-center gap-2"
+            className="mt-4 w-full hover:bg-[#F5511E] disabled:bg-zinc-300 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-full text-base touch-manipulation transition-colors flex items-center justify-center gap-2"
+            style={{ backgroundColor: "#FFA600" }}
           >
             Proceed to Payment
           </button>

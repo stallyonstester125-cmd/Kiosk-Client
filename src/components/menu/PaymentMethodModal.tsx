@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { X, Wallet, CreditCard } from "lucide-react";
+import { X } from "lucide-react";
 
 interface PaymentMethodModalProps {
   isOpen: boolean;
@@ -61,7 +61,13 @@ export default function PaymentMethodModal({
               onClick={() => onSelectMethod("cash")}
               className="relative flex flex-col items-center justify-center p-5 rounded-2xl border border-zinc-200 bg-white hover:border-[#FFA600] hover:bg-amber-50 transition-all touch-manipulation min-h-[140px]"
             >
-              <Wallet className="w-10 h-10 text-[#FFA600] mb-3" strokeWidth={2} />
+              <Image
+                src="/images/cash.png"
+                alt="Cash payment"
+                width={36}
+                height={36}
+                className="mb-3"
+              />
               <span className="text-sm font-medium text-zinc-900 text-center leading-snug">
                 Pay At The Counter
               </span>
@@ -72,7 +78,13 @@ export default function PaymentMethodModal({
               onClick={() => onSelectMethod("card")}
               className="relative flex flex-col items-center justify-center p-5 rounded-2xl border border-zinc-200 bg-white hover:border-[#FFA600] hover:bg-amber-50 transition-all touch-manipulation min-h-[140px]"
             >
-              <CreditCard className="w-10 h-10 text-[#FFA600] mb-3" strokeWidth={2} />
+              <Image
+                src="/images/card.png"
+                alt="Card payment"
+                width={36}
+                height={36}
+                className="mb-3"
+              />
               <span className="text-sm font-medium text-zinc-900 text-center leading-snug">
                 Pay Here
               </span>
