@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import ProductDetailModal from "@/components/ProductDetailModal";
@@ -95,6 +95,16 @@ export default function MenuPage() {
     );
   }
 
+  // TODO: Use actual promotional database campaign data when API supports it.
+  // Fallback to the first product of the active category as requested.
+  const promoProduct = filteredProducts[0];
+  const promoTitle = promoProduct ? promoProduct.name : "Fresh & Delicious";
+  const promoSubtitle = promoProduct
+    ? promoProduct.description
+    : "Explore our premium selection of kiosk meals made fresh for you everyday.";
+  const promoImage = promoProduct ? promoProduct.image : "";
+  const promoBadge = promoProduct ? `$${promoProduct.price.toFixed(2)}` : "Special";
+
   return (
     <div className="min-h-screen w-screen bg-[#FFF8F0] flex flex-col">
       <Header onCartClick={() => router.push("/cart")} />
@@ -123,3 +133,4 @@ export default function MenuPage() {
     </div>
   );
 }
+
