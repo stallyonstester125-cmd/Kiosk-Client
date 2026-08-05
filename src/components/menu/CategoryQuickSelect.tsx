@@ -60,8 +60,8 @@ export default function CategoryQuickSelect({
     if (!container) return;
 
     // Calculate scroll amount based on card width + gap
-    const cardWidth = 300; // w-72 = 300px + gap of 16px = 316px
-    const scrollAmount = cardWidth + 16;
+    const cardWidth = 150; // w-56 = 224px + gap of 12px = 236px
+    const scrollAmount = cardWidth + 12;
 
     container.scrollBy({
       left: direction === "left" ? -scrollAmount : scrollAmount,
@@ -73,23 +73,12 @@ export default function CategoryQuickSelect({
   };
 
   return (
-    <div className="relative w-full px-4 py-4">
-      {/* Scroll Left Button */}
-      {showLeftArrow && (
-        <button
-          onClick={() => scroll("left")}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-zinc-50 transition-colors touch-manipulation"
-          aria-label="Scroll categories left"
-        >
-          <ChevronLeft className="w-6 h-6 text-zinc-700" />
-        </button>
-      )}
-
+    <div className="relative w-full px-4 py-3">
       {/* Scrollable Categories Container */}
       <div
         ref={scrollContainerRef}
         onScroll={checkScroll}
-        className="flex overflow-x-auto snap-x snap-mandatory gap-4 scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-4"
+        className="flex overflow-x-auto snap-x snap-mandatory gap-3 scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-3"
       >
         {categories.map((cat) => {
           const IconComponent = getCategoryIcon(cat.name);
@@ -101,35 +90,35 @@ export default function CategoryQuickSelect({
               key={cat._id}
               onClick={() => onSelect(cat._id)}
               className={`
-                snap-start flex-shrink-0 w-[300px] min-w-[280px] aspect-square rounded-2xl p-6
+                snap-start flex-shrink-0 w-[144px] min-w-[144px] h-[144px] rounded-2xl p-3
                 flex flex-col items-center justify-center transition-all duration-300 cursor-pointer
                 ${isActive
-                  ? "bg-gradient-to-br from-[#FFA600] to-[#F5511E] text-white shadow-2xl scale-105 ring-4 ring-orange-200"
-                  : "bg-white border-2 border-zinc-100 shadow-md text-zinc-700 hover:border-orange-200 hover:scale-105"
+                  ? "bg-gradient-to-br from-[#FFA600] to-[#F5511E] text-white shadow-2xl ring-2 ring-orange-300"
+                  : "bg-white border-2 border-zinc-100 shadow-md text-zinc-700 hover:border-orange-200 hover:scale-102"
                 }
               `}
             >
               {/* Icon/Image Container */}
               <div className={`
-                w-20 h-20 rounded-full flex items-center justify-center mb-4 transition-colors
+                w-14 h-14 rounded-full flex items-center justify-center mb-2 transition-colors
                 ${isActive ? "bg-white/20 text-white" : "bg-zinc-50 text-zinc-500"}
               `}>
                 {cat.image && cat.image.trim() !== "" ? (
                   <Image
                     src={cat.image}
                     alt=""
-                    width={40}
-                    height={40}
+                    width={28}
+                    height={28}
                     className="object-contain"
                   />
                 ) : (
-                  <IconComponent className="w-10 h-10" strokeWidth={2} />
+                  <IconComponent className="w-6 h-6" strokeWidth={2} />
                 )}
               </div>
 
               {/* Category Name */}
               <span className={`
-                text-xl font-extrabold tracking-wide uppercase text-center leading-tight
+                text-sm font-bold tracking-wide uppercase text-center leading-snug
                 ${isActive ? "text-white" : "text-zinc-800"}
               `}>
                 {cat.name}
@@ -138,17 +127,6 @@ export default function CategoryQuickSelect({
           );
         })}
       </div>
-
-      {/* Scroll Right Button */}
-      {showRightArrow && (
-        <button
-          onClick={() => scroll("right")}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-zinc-50 transition-colors touch-manipulation"
-          aria-label="Scroll categories right"
-        >
-          <ChevronRight className="w-6 h-6 text-zinc-700" />
-        </button>
-      )}
     </div>
   );
 }
