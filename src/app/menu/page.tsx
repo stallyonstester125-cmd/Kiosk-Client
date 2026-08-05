@@ -215,7 +215,7 @@ export default function MenuPage() {
   if (loading) {
     return (
       <div className="min-h-screen w-screen bg-[#FFF8F0] flex items-center justify-center">
-        <p className="text-zinc-500 text-lg">Loading menu...</p>
+        <div className="loader" />
       </div>
     );
   }
@@ -236,7 +236,7 @@ export default function MenuPage() {
 
   return (
     <div className="min-h-screen w-screen bg-[#FFF8F0] flex flex-col">
-      <Header onCartClick={handleOpenCart} />
+      <Header />
 
       <main className="flex-1 max-w-md mx-auto w-full flex flex-col">
         <HeroBanner />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, Suspense } from "react";
-import { X, CheckCircle2, Copy, Timer, Loader2 } from "lucide-react";
+import { CheckCircle2, Copy, Timer, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
@@ -113,22 +113,57 @@ function FloatingFood() {
 }
 
 // ============================================
-// CHECKMARK ANIMATION
+// CHECKMARK ANIMATION - Centered with no pulsing background
 // ============================================
 function CheckmarkAnimation() {
   return (
-    <div className="relative w-24 h-24 flex items-center justify-center">
-      <div className="absolute inset-0 rounded-full bg-green-100 animate-pulse" style={{ animationDuration: "2s" }} />
-      <svg className="w-16 h-16 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-        <circle className="stroke-dasharray-100 animate-draw" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" style={{ strokeDasharray: "62.83", strokeDashoffset: "62.83" }} />
-        <polyline className="stroke-dasharray-50 animate-draw-delay" points="20 6 9 17 4 12" stroke="currentColor" strokeWidth="3" fill="none" style={{ strokeDasharray: "25", strokeDashoffset: "25" }} />
+    <div className="relative w-24 h-24 flex items-center justify-center mx-auto">
+      {/* Removed the pulsing background div */}
+      <div className="absolute inset-0 rounded-full bg-green-100 opacity-50" />
+      <svg 
+        className="w-16 h-16 text-green-500 relative z-10" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="3"
+      >
+        <circle 
+          className="animate-draw" 
+          cx="12" 
+          cy="12" 
+          r="10" 
+          stroke="currentColor" 
+          strokeWidth="3" 
+          fill="none" 
+          style={{ 
+            strokeDasharray: "62.83", 
+            strokeDashoffset: "62.83",
+            animation: "draw 0.6s ease-out 0.2s forwards"
+          }} 
+        />
+        <polyline 
+          className="animate-draw-delay" 
+          points="20 6 9 17 4 12" 
+          stroke="currentColor" 
+          strokeWidth="3" 
+          fill="none" 
+          style={{ 
+            strokeDasharray: "25", 
+            strokeDashoffset: "25",
+            animation: "draw 0.4s ease-out 0.8s forwards"
+          }} 
+        />
       </svg>
       <style jsx>{`
         @keyframes draw {
           to { stroke-dashoffset: 0; }
         }
-        .animate-draw { animation: draw 0.6s ease-out 0.2s forwards; }
-        .animate-draw-delay { animation: draw 0.4s ease-out 0.8s forwards; }
+        .animate-draw { 
+          animation: draw 0.6s ease-out 0.2s forwards; 
+        }
+        .animate-draw-delay { 
+          animation: draw 0.4s ease-out 0.8s forwards; 
+        }
       `}</style>
     </div>
   );
@@ -207,24 +242,16 @@ function ConfirmationContent() {
 
       {/* Header */}
       <div
-        className="w-full h-[63px] bg-[#FFA600] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center justify-between px-6"
+        className="w-full h-[80px] bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.1)] flex items-center justify-center px-6 border-b border-zinc-100"
       >
-        <button
-          onClick={() => router.push("/")}
-          className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 touch-manipulation"
-          aria-label="Close"
-        >
-          <X className="w-5 h-5 text-white" />
-        </button>
         <Image
           src="/images/logo.svg"
           alt="Kiosk Logo"
-          width={120}
-          height={40}
+          width={140}
+          height={45}
           priority
           className="object-contain"
         />
-        <div className="w-10" />
       </div>
 
       {/* Main Content */}
