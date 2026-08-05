@@ -72,47 +72,49 @@ function Confetti() {
 }
 
 // ============================================
-// CHECKMARK ANIMATION - Orange version
+// CHECKMARK ANIMATION - Orange version with proper sizing
 // ============================================
 function CheckmarkAnimation() {
   return (
-    <div className="relative w-24 h-24 flex items-center justify-center mx-auto">
-      {/* Orange background circle */}
-      <div className="absolute inset-0 rounded-full bg-orange-100 opacity-50" />
-      <svg 
-        className="w-16 h-16 text-[#FFA600] relative z-10" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="3"
-      >
-        <circle 
-          className="animate-draw" 
-          cx="12" 
-          cy="12" 
-          r="10" 
-          stroke="currentColor" 
-          strokeWidth="3" 
+    <div className="flex items-center justify-center mx-auto">
+      <div className="relative w-32 h-32">
+        {/* Orange background circle */}
+        <div className="absolute inset-0 rounded-full bg-orange-100 opacity-50" />
+        <svg 
+          className="w-full h-full text-[#FFA600] relative z-10 p-2" 
+          viewBox="0 0 24 24" 
           fill="none" 
-          style={{ 
-            strokeDasharray: "62.83", 
-            strokeDashoffset: "62.83",
-            animation: "draw 0.6s ease-out 0.2s forwards"
-          }} 
-        />
-        <polyline 
-          className="animate-draw-delay" 
-          points="20 6 9 17 4 12" 
           stroke="currentColor" 
-          strokeWidth="3" 
-          fill="none" 
-          style={{ 
-            strokeDasharray: "25", 
-            strokeDashoffset: "25",
-            animation: "draw 0.4s ease-out 0.8s forwards"
-          }} 
-        />
-      </svg>
+          strokeWidth="3"
+        >
+          <circle 
+            className="animate-draw" 
+            cx="12" 
+            cy="12" 
+            r="10" 
+            stroke="currentColor" 
+            strokeWidth="3" 
+            fill="none" 
+            style={{ 
+              strokeDasharray: "62.83", 
+              strokeDashoffset: "62.83",
+              animation: "draw 0.6s ease-out 0.2s forwards"
+            }} 
+          />
+          <polyline 
+            className="animate-draw-delay" 
+            points="20 6 9 17 4 12" 
+            stroke="currentColor" 
+            strokeWidth="3" 
+            fill="none" 
+            style={{ 
+              strokeDasharray: "25", 
+              strokeDashoffset: "25",
+              animation: "draw 0.4s ease-out 0.8s forwards"
+            }} 
+          />
+        </svg>
+      </div>
       <style jsx>{`
         @keyframes draw {
           to { stroke-dashoffset: 0; }

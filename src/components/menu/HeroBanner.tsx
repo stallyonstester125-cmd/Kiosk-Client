@@ -1,18 +1,20 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 
 export default function HeroBanner({ className }: { className?: string }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, slide: 0 });
 
   const slides = [
     { src: "/images/hero.png", alt: "Kiosk Promo 1" },
     { src: "/images/hero2.png", alt: "Kiosk Promo 2" },
   ];
 
-  // Preload images - Use window.Image instead of Image
+  // Preload images
   useEffect(() => {
     slides.forEach((slide) => {
       const img = new window.Image();
@@ -39,11 +41,38 @@ export default function HeroBanner({ className }: { className?: string }) {
     }
   }, [isAnimating]);
 
+  // Mouse drag handlers
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return; // Only left mouse button
+    
+    setIsDragging(true);
+    setCurrentSlide(prev => {
+      // Calculate current slide based on drag start
+      return currentSlide;
+    });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    // We'll handle drag by updating a drag offset state
+  };
+
+  const handleMouseUp = () => {
+    if (isDragging) {
+      // Snap to nearest slide on release
+    }
+  };
+
   return (
     <div className={`relative overflow-hidden rounded-2xl shadow-lg my-4 aspect-[16/9] ${className ?? ""}`}>
       <div
         className="relative w-full h-full flex"
         style={{ transform: `translateX(-${100 * currentSlide}%)`, transition: "transform 500ms ease-out" }}
+        onMouseDown={(e) => {
+          if (e.button !== 0) return;
+        }}
+        onMouseUp={() => {}}
+        onMouseLeave={() => {}}
       >
         {slides.map((slide, index) => (
           <div

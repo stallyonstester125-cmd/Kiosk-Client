@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ArrowLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
 
 interface NameEntryModalProps {
   isOpen: boolean;
@@ -40,6 +41,18 @@ export default function NameEntryModal({ isOpen, onClose, onSubmit, isLoading, e
           >
             <ArrowLeft className="w-5 h-5 text-zinc-700" />
           </button>
+        </div>
+
+        {/* Logo */}
+        <div className="flex justify-center mb-4">
+          <Image
+            src="/images/logo.svg"
+            alt="Kiosk Logo"
+            width={140}
+            height={50}
+            className="object-contain"
+            priority
+          />
         </div>
 
         <h2 className="text-xl font-bold text-zinc-900 text-center mb-2">Enter your name</h2>
