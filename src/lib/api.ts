@@ -5,6 +5,7 @@ export interface ApiCategory {
     name: string;
     displayOrder: number;
     isActive: boolean;
+    image?: string;
 }
 
 export interface CustomizationOption {
