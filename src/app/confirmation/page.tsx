@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, Suspense } from "react";
-import { CheckCircle2, Copy, Timer, Loader2 } from "lucide-react";
+import { Timer, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
@@ -72,56 +72,15 @@ function Confetti() {
 }
 
 // ============================================
-// FLOATING FOOD ICONS
-// ============================================
-function FloatingFood() {
-  const items = [
-    { emoji: "🍔", x: 5, y: 15, delay: 0, duration: 20 },
-    { emoji: "🍟", x: 90, y: 25, delay: 2, duration: 25 },
-    { emoji: "🍕", x: 15, y: 70, delay: 4, duration: 22 },
-    { emoji: "🥤", x: 85, y: 60, delay: 1, duration: 28 },
-    { emoji: "🍔", x: 70, y: 10, delay: 3, duration: 18 },
-    { emoji: "🍟", x: 25, y: 55, delay: 5, duration: 24 },
-  ];
-
-  return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 10 }} aria-hidden="true">
-      {items.map((item, i) => (
-        <div
-          key={i}
-          className="absolute"
-          style={{
-            left: `${item.x}%`,
-            top: `${item.y}%`,
-            fontSize: "2rem",
-            opacity: 0.08,
-            animation: `float ${item.duration}s ease-in-out ${item.delay}s infinite`,
-            pointerEvents: "none",
-          }}
-        >
-          {item.emoji}
-        </div>
-      ))}
-      <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(5deg); }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-// ============================================
-// CHECKMARK ANIMATION - Centered with no pulsing background
+// CHECKMARK ANIMATION - Orange version
 // ============================================
 function CheckmarkAnimation() {
   return (
     <div className="relative w-24 h-24 flex items-center justify-center mx-auto">
-      {/* Removed the pulsing background div */}
-      <div className="absolute inset-0 rounded-full bg-green-100 opacity-50" />
+      {/* Orange background circle */}
+      <div className="absolute inset-0 rounded-full bg-orange-100 opacity-50" />
       <svg 
-        className="w-16 h-16 text-green-500 relative z-10" 
+        className="w-16 h-16 text-[#FFA600] relative z-10" 
         viewBox="0 0 24 24" 
         fill="none" 
         stroke="currentColor" 
@@ -170,14 +129,10 @@ function CheckmarkAnimation() {
 }
 
 // ============================================
-// WRAPPER COMPONENTS (Defined once)
+// WRAPPER COMPONENTS
 // ============================================
 function ConfettiContainer() {
   return <Confetti />;
-}
-
-function FloatingFoodContainer() {
-  return <FloatingFood />;
 }
 
 // ============================================
@@ -238,7 +193,6 @@ function ConfirmationContent() {
     <div className="min-h-screen w-screen bg-[#FFF8F0] relative overflow-hidden">
       {/* Celebration Effects */}
       <ConfettiContainer />
-      <FloatingFoodContainer />
 
       {/* Header */}
       <div
@@ -263,18 +217,9 @@ function ConfirmationContent() {
           <p className="mt-2 text-zinc-500">Thank you! Your order has been placed successfully.</p>
         </div>
 
-        {/* Order Number Card */}
+        {/* Order Number Card - Removed Copy Button */}
         <div className="bg-white rounded-2xl shadow-md p-5 mb-5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold text-zinc-900">Order Number</h3>
-            <button
-              onClick={() => navigator.clipboard.writeText(orderNumber || "")}
-              className="p-2 text-zinc-400 hover:text-zinc-600 transition-colors"
-              aria-label="Copy order number"
-            >
-              <Copy className="w-5 h-5" strokeWidth={2} />
-            </button>
-          </div>
+          <h3 className="text-lg font-semibold text-zinc-900 mb-3">Order Number</h3>
           <div className="bg-zinc-50 rounded-xl p-4 font-mono text-xl font-bold text-center text-zinc-900 tracking-wide">
             #{orderNumber || "—"}
           </div>

@@ -37,6 +37,8 @@ export default function CategoryQuickSelect({
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(false);
   const [activePage, setActivePage] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, scrollLeft: 0 });
 
   // Calculate total pages based on 2 cards per page
   const cardsPerPage = 2;
@@ -86,13 +88,67 @@ export default function CategoryQuickSelect({
     setTimeout(checkScroll, 300);
   };
 
+  // Mouse drag handlers
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return; // Only left mouse button
+    
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX,
+      scrollLeft: scrollContainerRef.current?.scrollLeft ?? 0,
+    });
+    
+    // Prevent text selection while dragging
+    e.currentTarget.style.userSelect = "none";
+    e.currentTarget.style.cursor = "grabbing";
+    
+    // Prevent click on category cards during drag
+    e.currentTarget.style.pointerEvents = "none";
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const dx = e.clientX - dragStart.x;
+    container.scrollLeft = dragStart.scrollLeft - dx;
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging) return;
+    
+    setIsDragging(false);
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.style.userSelect = "";
+      container.style.cursor = "grab";
+      container.style.pointerEvents = "auto";
+    }
+    
+    // Check scroll position after drag ends
+    setTimeout(checkScroll, 50);
+  };
+
+  const handleMouseLeave = () => {
+    handleMouseUp();
+  };
+
   return (
     <div className="relative w-full px-4 py-3">
       {/* Scrollable Categories Container */}
       <div
         ref={scrollContainerRef}
         onScroll={checkScroll}
-        className="flex overflow-x-auto snap-x snap-mandatory gap-3 scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-3"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        onTouchStart={() => {}} // Prevent touch from interfering with mouse
+        className={`flex overflow-x-auto snap-x snap-mandatory gap-3 scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-3 ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
+        style={{ userSelect: isDragging ? "none" : "auto" }}
       >
         {categories.map((cat) => {
           const IconComponent = getCategoryIcon(cat.name);
