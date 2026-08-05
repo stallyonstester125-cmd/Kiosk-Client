@@ -1,13 +1,14 @@
 "use client";
 
 import { useCart } from "@/context/CartContext";
-import { ShoppingCart, X } from "lucide-react";
+import { X } from "lucide-react";
 
 interface BottomCartBarProps {
   onClick: () => void;
+  isCartModalOpen: boolean;
 }
 
-export default function BottomCartBar({ onClick }: BottomCartBarProps) {
+export default function BottomCartBar({ onClick, isCartModalOpen }: BottomCartBarProps) {
   const { getItemCount, clearCart } = useCart();
   const itemCount = getItemCount();
 
@@ -22,7 +23,11 @@ export default function BottomCartBar({ onClick }: BottomCartBarProps) {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 animate-slide-up pb-safe">
+    <div className={`fixed bottom-0 left-0 right-0 z-50 pb-safe transition-all duration-300 ease-out ${
+      isCartModalOpen
+        ? "opacity-0 pointer-events-none -translate-y-full"
+        : "opacity-100 pointer-events-auto translate-y-0 animate-slide-up"
+    }`}>
       <div className="mx-4 mb-4">
         <div className="bg-white rounded-2xl shadow-xl p-3 h-[60px] flex items-center justify-between">
           {/* Left: Cancel */}

@@ -293,7 +293,7 @@ export default function MenuPage() {
         }}
       />
 
-      <BottomCartBar onClick={handleOpenCart} />
+      <BottomCartBar onClick={handleOpenCart} isCartModalOpen={isCartModalOpen} />
     </div>
   );
 }
