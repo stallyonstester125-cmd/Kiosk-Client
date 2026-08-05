@@ -17,6 +17,11 @@ export default function CartModal({ isOpen, onClose, onProceedToPayment }: CartM
 
   const formatPrice = (price: number) => `$${price.toFixed(2)}`;
 
+  const getTax = (total: number): number => {
+    // Tax is inclusive, so tax = total - (total / 1.1)
+    return total - (total / 1.1);
+  };
+
   const handleQuantityChange = (cartItemId: string, delta: number) => {
     const item = state.items.find((item) => item.cartItemId === cartItemId);
     if (item) {
@@ -107,9 +112,19 @@ export default function CartModal({ isOpen, onClose, onProceedToPayment }: CartM
           )}
 
           {/* Total row */}
-          <div className="mt-4 pt-4 border-t border-zinc-200 flex items-center justify-between">
-            <span className="text-sm text-zinc-600 font-medium">Total Amount</span>
-            <span className="text-lg font-bold text-zinc-900">{formatPrice(getTotal())}</span>
+          <div className="mt-4 pt-4 border-t border-zinc-200 space-y-2">
+            <div className="flex items-center justify-between text-sm text-zinc-600">
+              <span>Subtotal</span>
+              <span className="font-medium">{formatPrice(getTotal() - getTax(getTotal()))}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm text-zinc-600">
+              <span>Tax (Inclusive)</span>
+              <span className="font-medium">{formatPrice(getTotal() - (getTotal() / 1.1))}</span>
+            </div>
+            <div className="flex items-center justify-between border-t border-zinc-200 pt-2">
+              <span className="text-sm text-zinc-600 font-medium">Total Amount</span>
+              <span className="text-lg font-bold text-zinc-900">{formatPrice(getTotal())}</span>
+            </div>
           </div>
 
           {/* Checkout button */}

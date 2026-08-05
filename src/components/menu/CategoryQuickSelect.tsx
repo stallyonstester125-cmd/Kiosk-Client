@@ -99,14 +99,16 @@ export default function CategoryQuickSelect({
     });
     
     // Prevent text selection while dragging
-    e.currentTarget.style.userSelect = "none";
-    e.currentTarget.style.cursor = "grabbing";
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "grabbing";
     
-    // Prevent click on category cards during drag
-    e.currentTarget.style.pointerEvents = "none";
+    // Add document-level listeners for drag
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mouseleave", handleMouseLeave);
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = (e: MouseEvent) => {
     if (!isDragging) return;
     e.preventDefault();
     
@@ -121,20 +123,34 @@ export default function CategoryQuickSelect({
     if (!isDragging) return;
     
     setIsDragging(false);
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.style.userSelect = "";
-      container.style.cursor = "grab";
-      container.style.pointerEvents = "auto";
-    }
+    document.body.style.userSelect = "";
+    document.body.style.cursor = "";
+    
+    // Remove document-level listeners
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", handleMouseUp);
+    document.removeEventListener("mouseleave", handleMouseLeave);
     
     // Check scroll position after drag ends
     setTimeout(checkScroll, 50);
   };
 
-  const handleMouseLeave = () => {
-    handleMouseUp();
+  const handleMouseLeave = (e: MouseEvent) => {
+    // Only trigger if mouse leaves the window
+    if (e.clientX <= 0 || e.clientY <= 0 || 
+        e.clientX >= window.innerWidth || e.clientY >= window.innerHeight) {
+      handleMouseUp();
+    }
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, []);
 
   return (
     <div className="relative w-full px-4 py-3">
@@ -143,10 +159,6 @@ export default function CategoryQuickSelect({
         ref={scrollContainerRef}
         onScroll={checkScroll}
         onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
-        onTouchStart={() => {}} // Prevent touch from interfering with mouse
         className={`flex overflow-x-auto snap-x snap-mandatory gap-3 scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-3 ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
         style={{ userSelect: isDragging ? "none" : "auto" }}
       >
