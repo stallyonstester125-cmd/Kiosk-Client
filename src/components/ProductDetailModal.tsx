@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useMemo } from "react";
 import { X, Plus, Minus, ChevronDown, ChevronUp, Check } from "lucide-react";
 import { ApiProduct, CustomizationGroup } from "@/lib/api";

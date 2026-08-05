@@ -13,6 +13,7 @@ import CategoryQuickSelect from "@/components/menu/CategoryQuickSelect";
 import ProductGrid from "@/components/menu/ProductGrid";
 import CartModal from "@/components/menu/CartModal";
 import PaymentMethodModal from "@/components/menu/PaymentMethodModal";
+import BottomCartBar from "@/components/menu/BottomCartBar";
 
 export default function MenuPage() {
   const router = useRouter();
@@ -235,7 +236,7 @@ export default function MenuPage() {
 
   return (
     <div className="min-h-screen w-screen bg-[#FFF8F0] flex flex-col">
-      <Header onCartClick={handleOpenCart} />
+      <Header />
 
       <main className="flex-1 max-w-md mx-auto w-full flex flex-col">
         <HeroBanner />
@@ -291,6 +292,8 @@ export default function MenuPage() {
           setPendingCustomerName("");
         }}
       />
+
+      <BottomCartBar onClick={handleOpenCart} />
     </div>
   );
 }
