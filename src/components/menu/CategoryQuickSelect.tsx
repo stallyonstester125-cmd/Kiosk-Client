@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { ChevronLeft, ChevronRight, Utensils, GlassWater, IceCream, Pizza, Flame } from "lucide-react";
 import Image from "next/image";
 import { ApiCategory } from "@/lib/api";
@@ -36,6 +36,11 @@ export default function CategoryQuickSelect({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(false);
+  const [activePage, setActivePage] = useState(0);
+
+  // Calculate total pages based on 2 cards per page
+  const cardsPerPage = 2;
+  const totalPages = useMemo(() => Math.ceil(categories.length / cardsPerPage), [categories.length]);
 
   // Check if scroll buttons should be visible
   const checkScroll = () => {
@@ -45,6 +50,14 @@ export default function CategoryQuickSelect({
     const { scrollLeft, scrollWidth, clientWidth } = container;
     setShowLeftArrow(scrollLeft > 10);
     setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+
+    // Calculate current page based on scroll position
+    const cardWidth = 150; // w-56 = 224px + gap of 12px = 236px
+    const cardsPerPage = 2;
+    const scrollAmount = cardWidth + 12; // 150 + 12 = 162px per card
+    const pageScrollWidth = scrollAmount * cardsPerPage; // width of 2 cards
+    const currentPage = Math.round(scrollLeft / pageScrollWidth);
+    setActivePage(Math.min(Math.max(currentPage, 0), totalPages - 1));
   };
 
   // Check scroll position on mount and when categories change
@@ -54,14 +67,15 @@ export default function CategoryQuickSelect({
     return () => window.removeEventListener("resize", checkScroll);
   }, [categories]);
 
-  // Scroll left or right by one card width
+  // Scroll left or right by one page (2 cards)
   const scroll = (direction: "left" | "right") => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    // Calculate scroll amount based on card width + gap
-    const cardWidth = 150; // w-56 = 224px + gap of 12px = 236px
-    const scrollAmount = cardWidth + 12;
+    // Scroll by 2 cards width (one page)
+    const cardWidth = 150;
+    const cardsPerPage = 2;
+    const scrollAmount = (cardWidth + 12) * cardsPerPage; // (150 + 12) * 2 = 324
 
     container.scrollBy({
       left: direction === "left" ? -scrollAmount : scrollAmount,
@@ -127,6 +141,38 @@ export default function CategoryQuickSelect({
           );
         })}
       </div>
+
+      {/* Pagination Indicator */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-4">
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              className={`
+                transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2
+                ${activePage === i
+                  ? "w-[28px] h-[7px] rounded-full bg-[#F5511E] shadow-md"
+                  : "w-[8px] h-[8px] rounded-full bg-white border-2 border-[#F5511E]"
+                }
+              `}
+              onClick={() => {
+                const container = scrollContainerRef.current;
+                if (!container) return;
+                const cardWidth = 150;
+                const cardsPerPage = 2;
+                const scrollAmount = (cardWidth + 12) * 2;
+                container.scrollTo({
+                  left: i * (cardWidth + 12) * 2,
+                  behavior: "smooth",
+                });
+                setActivePage(i);
+              }}
+              aria-label={`Go to category page ${i + 1}`}
+              aria-current={activePage === i ? "true" : "false"}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
