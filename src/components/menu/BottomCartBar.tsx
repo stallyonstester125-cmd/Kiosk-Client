@@ -6,13 +6,14 @@ import { X } from "lucide-react";
 interface BottomCartBarProps {
   onClick: () => void;
   isCartModalOpen: boolean;
+  isPaymentModalOpen: boolean;
 }
 
-export default function BottomCartBar({ onClick, isCartModalOpen }: BottomCartBarProps) {
+export default function BottomCartBar({ onClick, isCartModalOpen, isPaymentModalOpen }: BottomCartBarProps) {
   const { getItemCount, clearCart } = useCart();
   const itemCount = getItemCount();
 
-  if (itemCount === 0) return null;
+  if (itemCount === 0 || isCartModalOpen || isPaymentModalOpen) return null;
 
   const handleCancel = () => {
     clearCart();
@@ -24,10 +25,10 @@ export default function BottomCartBar({ onClick, isCartModalOpen }: BottomCartBa
 
   return (
     <div className={`fixed bottom-0 left-0 right-0 z-50 pb-safe transition-all duration-300 ease-out ${
-      isCartModalOpen
+      isCartModalOpen || isPaymentModalOpen
         ? "opacity-0 pointer-events-none -translate-y-full"
         : "opacity-100 pointer-events-auto translate-y-0 animate-slide-up"
-    }`}>
+    } pb-safe`}>
       <div className="mx-4 mb-4">
         <div className="bg-white rounded-2xl shadow-xl p-3 h-[60px] flex items-center justify-between">
           {/* Left: Cancel */}

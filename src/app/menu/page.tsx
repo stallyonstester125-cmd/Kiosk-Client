@@ -236,7 +236,7 @@ export default function MenuPage() {
 
   return (
     <div className="min-h-screen w-screen bg-[#FFF8F0] flex flex-col">
-      <Header />
+      <Header onCartClick={handleOpenCart} />
 
       <main className="flex-1 max-w-md mx-auto w-full flex flex-col">
         <HeroBanner />
@@ -293,7 +293,7 @@ export default function MenuPage() {
         }}
       />
 
-      <BottomCartBar onClick={handleOpenCart} isCartModalOpen={isCartModalOpen} />
+      <BottomCartBar onClick={handleOpenCart} isCartModalOpen={isCartModalOpen} isPaymentModalOpen={isPaymentModalOpen} />
     </div>
   );
 }
