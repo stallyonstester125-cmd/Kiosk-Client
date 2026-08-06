@@ -56,6 +56,9 @@ export default function HeroBanner({ className }: { className?: string }) {
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
     
+    // Prevent default to stop text selection and native drag
+    e.preventDefault();
+    
     setIsDragging(true);
     setIsAnimating(false);
     dragStartRef.current = {
@@ -74,6 +77,9 @@ export default function HeroBanner({ className }: { className?: string }) {
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isDragging) return;
     
+    // Prevent default to stop native drag
+    e.preventDefault();
+    
     const deltaX = e.clientX - dragStartRef.current.x;
     const containerWidth = containerRef.current?.offsetWidth || 600;
     const offsetPercent = (deltaX / containerWidth) * 100;
@@ -83,8 +89,11 @@ export default function HeroBanner({ className }: { className?: string }) {
     setDragOffset(clampedOffset);
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isDragging) return;
+    
+    // Prevent default
+    e.preventDefault();
     
     const threshold = 15; // 15% threshold to change slide
     
@@ -115,8 +124,11 @@ export default function HeroBanner({ className }: { className?: string }) {
     }, 5000);
   };
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isDragging) {
+      // Prevent default
+      e.preventDefault();
+      
       const threshold = 15;
       let newSlide = currentSlide;
       
@@ -141,8 +153,17 @@ export default function HeroBanner({ className }: { className?: string }) {
     return `translateX(-${currentSlide * 100}%)`;
   };
 
+  // Prevent default drag on images
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
   return (
-    <div className={`relative overflow-hidden rounded-2xl shadow-lg my-4 aspect-[16/9] ${className ?? ""}`}>
+    <div 
+      className={`relative overflow-hidden rounded-2xl shadow-lg my-4 aspect-[16/9] ${className ?? ""}`}
+      // Prevent default drag on the container
+      onDragStart={handleDragStart}
+    >
       <div
         ref={containerRef}
         className="relative w-full h-full flex cursor-grab active:cursor-grabbing select-none"
@@ -160,12 +181,16 @@ export default function HeroBanner({ className }: { className?: string }) {
             clearInterval(autoSlideTimerRef.current);
           }
         }}
+        // Prevent default drag on the slider container
+        onDragStart={handleDragStart}
       >
         {slides.map((slide, index) => (
           <div
             key={index}
             className="relative w-full h-full flex-shrink-0"
             style={{ minWidth: "100%" }}
+            // Prevent default drag on each slide container
+            onDragStart={handleDragStart}
           >
             <Image
               src={slide.src}
@@ -174,6 +199,8 @@ export default function HeroBanner({ className }: { className?: string }) {
               priority={index === 0}
               className="object-cover rounded-2xl"
               sizes="100vw"
+              // CRITICAL: Prevent native image drag
+              draggable={false}
             />
           </div>
         ))}
