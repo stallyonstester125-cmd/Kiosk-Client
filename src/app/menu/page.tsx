@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import ProductDetailModal from "@/components/ProductDetailModal";
@@ -36,7 +36,7 @@ export default function MenuPage() {
   const [stripeAmount, setStripeAmount] = useState(0);
   const [pendingCustomerName, setPendingCustomerName] = useState("");
 
-  const { state, getItemCount, orderType, placeOrder } = useCart();
+  const { state, getItemCount, orderType, placeOrder, appliedCoupon } = useCart();
 
   const loadMenu = async () => {
     setLoading(true);
@@ -117,6 +117,8 @@ export default function MenuPage() {
 
     setOrderError(null);
 
+    const couponCode = appliedCoupon?.coupon?.code || undefined;
+
     if (paymentMethod === "cash") {
       // ── CASH FLOW ──────────────────────────────────
       setIsPlacingOrder(true);
@@ -129,9 +131,11 @@ export default function MenuPage() {
             total: number;
             subtotal: number;
             tax: number;
+            coupon_code?: string;
+            discount_amount?: number;
           };
           router.push(
-            `/confirmation?orderId=${data._id}&orderNumber=${data.orderNumber}&total=${data.total}&subtotal=${data.subtotal}&tax=${data.tax}`
+            `/confirmation?orderId=${data._id}&orderNumber=${data.orderNumber}&total=${data.total}&subtotal=${data.subtotal}&tax=${data.tax}&couponCode=${data.coupon_code || ""}&discount=${data.discount_amount || 0}`
           );
         } else {
           setOrderError("Failed to place order. Please try again.");
@@ -160,6 +164,7 @@ export default function MenuPage() {
           orderType,
           customerName: name,
           items: cartItems,
+          couponCode,
         });
 
         setPendingCustomerName(name);
@@ -190,9 +195,11 @@ export default function MenuPage() {
           total: number;
           subtotal: number;
           tax: number;
+          coupon_code?: string;
+          discount_amount?: number;
         };
         router.push(
-          `/confirmation?orderId=${data._id}&orderNumber=${data.orderNumber}&total=${data.total}&subtotal=${data.subtotal}&tax=${data.tax}`
+          `/confirmation?orderId=${data._id}&orderNumber=${data.orderNumber}&total=${data.total}&subtotal=${data.subtotal}&tax=${data.tax}&couponCode=${data.coupon_code || ""}&discount=${data.discount_amount || 0}`
         );
       } else {
         setOrderError("Payment succeeded but order creation failed. Please contact staff.");

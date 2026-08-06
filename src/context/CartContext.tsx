@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useReducer, useState, ReactNode, Dispatch } from "react";
+import React, { createContext, useContext, useReducer, useState, useEffect, ReactNode, Dispatch } from "react";
 
 export interface CartItem {
   cartItemId: string;
@@ -37,6 +37,12 @@ interface CartContextType {
   setOrderType: (type: "eat-in" | "take-away") => void;
   clearOrderType: () => void;
   placeOrder: (customerName: string, paymentMethod: "cash" | "card", paymentStatus?: "pending" | "paid" | "failed", couponCode?: string) => Promise<{ success: boolean; data: Record<string, unknown> }>;
+  appliedCoupon: any;
+  isApplyingCoupon: boolean;
+  couponError: string | null;
+  applyCoupon: (code: string) => Promise<boolean>;
+  removeCoupon: () => void;
+  getDiscountAmount: () => number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -106,8 +112,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "REMOVE_ITEM", payload: cartItemId });
   };
 
+  // Coupon State
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponError(null);
+  };
+
   const clearCart = () => {
     dispatch({ type: "CLEAR_CART" });
+    removeCoupon();
   };
 
   const setOrderTypeWithPersistence = (type: "eat-in" | "take-away") => {
@@ -127,12 +144,75 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const getSubtotal = () =>
     state.items.reduce((sum, item) => sum + item.basePrice * item.quantity, 0);
 
-  const getTax = () => getSubtotal() * 0.1;
+  const getTax = () => {
+    if (appliedCoupon) {
+      return appliedCoupon.updatedTax;
+    }
+    return getSubtotal() * 0.1;
+  };
 
-  const getTotal = () => getSubtotal() + getTax();
+  const getTotal = () => {
+    if (appliedCoupon) {
+      return appliedCoupon.updatedTotal;
+    }
+    return getSubtotal() + getTax();
+  };
 
   const getItemCount = () =>
     state.items.reduce((sum, item) => sum + item.quantity, 0);
+
+  const getDiscountAmount = () => {
+    return appliedCoupon ? appliedCoupon.discountAmount : 0;
+  };
+
+  const applyCoupon = async (code: string) => {
+    if (!code.trim()) return false;
+    setIsApplyingCoupon(true);
+    setCouponError(null);
+    try {
+      const { validateCoupon } = await import("@/lib/api");
+      const validation = await validateCoupon(code.trim(), getSubtotal());
+      if (validation.valid) {
+        setAppliedCoupon(validation);
+        setCouponError(null);
+        setIsApplyingCoupon(false);
+        return true;
+      } else {
+        setAppliedCoupon(null);
+        setCouponError(validation.reason || "Invalid coupon code");
+        setIsApplyingCoupon(false);
+        return false;
+      }
+    } catch (err) {
+      setAppliedCoupon(null);
+      setCouponError(err instanceof Error ? err.message : "Failed to validate coupon");
+      setIsApplyingCoupon(false);
+      return false;
+    }
+  };
+
+  // Revalidate coupon on quantity changes
+  useEffect(() => {
+    const sub = getSubtotal();
+    if (appliedCoupon && sub > 0) {
+      const revalidate = async () => {
+        try {
+          const { validateCoupon } = await import("@/lib/api");
+          const validation = await validateCoupon(appliedCoupon.coupon.code, sub);
+          if (validation.valid) {
+            setAppliedCoupon(validation);
+          } else {
+            setAppliedCoupon(null);
+          }
+        } catch {
+          setAppliedCoupon(null);
+        }
+      };
+      void revalidate();
+    } else if (sub === 0 && appliedCoupon) {
+      removeCoupon();
+    }
+  }, [state.items]);
 
   const placeOrder = async (
     customerName: string,
@@ -156,13 +236,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }))
     }));
 
+    const finalCouponCode = couponCode || appliedCoupon?.coupon?.code;
+
     const response = await createOrder({
       orderType: orderType!,
       customerName,
       items,
       paymentMethod,
       ...(paymentStatus ? { paymentStatus } : {}),
-      couponCode
+      couponCode: finalCouponCode
     });
 
     if (response.success) {
@@ -189,7 +271,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         orderType,
         setOrderType: setOrderTypeWithPersistence,
         clearOrderType,
-        placeOrder
+        placeOrder,
+        appliedCoupon,
+        isApplyingCoupon,
+        couponError,
+        applyCoupon,
+        removeCoupon,
+        getDiscountAmount
       }}
     >
       {children}

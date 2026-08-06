@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ArrowLeft, Ticket } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -22,6 +22,12 @@ export default function CartPage() {
     removeFromCart,
     orderType,
     placeOrder,
+    appliedCoupon,
+    isApplyingCoupon,
+    couponError,
+    applyCoupon,
+    removeCoupon,
+    getDiscountAmount,
   } = useCart();
 
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("card");
@@ -35,11 +41,8 @@ export default function CartPage() {
   const [stripeAmount, setStripeAmount] = useState(0);
   const [pendingCustomerName, setPendingCustomerName] = useState("");
 
-  // Coupon state
+  // Coupon input state
   const [couponCodeInput, setCouponCodeInput] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
-  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
-  const [localCouponError, setLocalCouponError] = useState<string | null>(null);
 
   const handleQuantityChange = (id: string, quantity: number) => {
     if (quantity <= 0) {
@@ -59,52 +62,15 @@ export default function CartPage() {
     setShowNameModal(true);
   };
 
-  const handleApplyCoupon = async (code: string, isSilent = false) => {
-    if (!code.trim()) return;
-    if (!isSilent) {
-      setIsApplyingCoupon(true);
-      setLocalCouponError(null);
-    }
-    try {
-      const { validateCoupon } = await import("@/lib/api");
-      const validation = await validateCoupon(code.trim(), subtotal);
-      if (validation.valid) {
-        setAppliedCoupon(validation);
-        setLocalCouponError(null);
-      } else {
-        setAppliedCoupon(null);
-        if (!isSilent) {
-          setLocalCouponError(validation.reason || "Invalid coupon code");
-        }
-      }
-    } catch (err) {
-      setAppliedCoupon(null);
-      if (!isSilent) {
-        setLocalCouponError(err instanceof Error ? err.message : "Failed to validate coupon");
-      }
-    } finally {
-      if (!isSilent) {
-        setIsApplyingCoupon(false);
-      }
-    }
+  const handleApplyCouponClick = async () => {
+    if (!couponCodeInput.trim()) return;
+    await applyCoupon(couponCodeInput);
   };
 
-  const handleRemoveCoupon = () => {
-    setAppliedCoupon(null);
+  const handleRemoveCouponClick = () => {
+    removeCoupon();
     setCouponCodeInput("");
-    setLocalCouponError(null);
   };
-
-  const subtotal = getSubtotal();
-
-  // Revalidate coupon on subtotal changes (quantities altered)
-  useEffect(() => {
-    if (appliedCoupon && subtotal > 0) {
-      void handleApplyCoupon(appliedCoupon.coupon.code, true);
-    } else if (subtotal === 0 && appliedCoupon) {
-      handleRemoveCoupon();
-    }
-  }, [subtotal]);
 
   /** Called by NameEntryModal after the customer enters their name */
   const handleNameSubmit = async (name: string) => {
@@ -218,9 +184,10 @@ export default function CartPage() {
     setPendingCustomerName("");
   };
 
-  const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
-  const tax = appliedCoupon ? appliedCoupon.updatedTax : getTax();
-  const total = appliedCoupon ? appliedCoupon.updatedTotal : getTotal();
+  const subtotal = getSubtotal();
+  const discountAmount = getDiscountAmount();
+  const tax = getTax();
+  const total = getTotal();
 
   const formatPrice = (price: number) => `$${price.toFixed(2)}`;
 
@@ -273,7 +240,7 @@ export default function CartPage() {
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-zinc-900">{item.name}</h3>
+                      <h3 className="font-bold text-zinc-950">{item.name}</h3>
                       <p className="text-zinc-500 text-sm">{formatPrice(item.basePrice)}</p>
                       {item.selectedCustomizations.length > 0 && (
                         <div className="mt-2 space-y-1 ml-4 border-l-2 border-zinc-200 pl-3">
@@ -299,7 +266,7 @@ export default function CartPage() {
                       >
                         <span className="text-zinc-600 font-bold">−</span>
                       </button>
-                      <span className="w-10 text-center font-bold text-zinc-900">{item.quantity}</span>
+                      <span className="w-10 text-center font-bold text-zinc-950">{item.quantity}</span>
                       <button
                         onClick={() => handleQuantityChange(item.cartItemId, item.quantity + 1)}
                         className="w-9 h-9 rounded-lg border border-zinc-200 flex items-center justify-center touch-manipulation hover:bg-zinc-50"
@@ -308,7 +275,7 @@ export default function CartPage() {
                         <span className="text-zinc-600 font-bold">+</span>
                       </button>
                     </div>
-                    <span className="font-bold text-zinc-900 text-lg">
+                    <span className="font-bold text-zinc-955 text-lg">
                       {formatPrice(item.basePrice * item.quantity)}
                     </span>
                   </div>
@@ -369,17 +336,14 @@ export default function CartPage() {
                     <input
                       type="text"
                       value={couponCodeInput}
-                      onChange={(e) => {
-                        setCouponCodeInput(e.target.value.toUpperCase());
-                        setLocalCouponError(null);
-                      }}
+                      onChange={(e) => setCouponCodeInput(e.target.value.toUpperCase())}
                       placeholder="Enter code"
                       className="flex-1 px-3 py-2 border border-zinc-200 rounded-lg text-sm bg-white text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500 uppercase font-semibold"
                     />
                     <button
-                      onClick={() => handleApplyCoupon(couponCodeInput)}
+                      onClick={handleApplyCouponClick}
                       disabled={!couponCodeInput.trim() || isApplyingCoupon}
-                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-zinc-200 disabled:text-zinc-400 text-black font-semibold rounded-lg text-sm transition-colors"
+                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-zinc-200 disabled:text-zinc-400 text-black font-semibold rounded-lg text-sm transition-colors animate-pulse-subtle"
                     >
                       {isApplyingCoupon ? "..." : "Apply"}
                     </button>
@@ -397,7 +361,7 @@ export default function CartPage() {
                         </p>
                       </div>
                       <button
-                        onClick={handleRemoveCoupon}
+                        onClick={handleRemoveCouponClick}
                         className="text-xs font-bold text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors"
                       >
                         Remove
@@ -405,8 +369,8 @@ export default function CartPage() {
                     </div>
                   </div>
                 )}
-                {localCouponError && (
-                  <p className="mt-2 text-xs text-red-600 font-semibold">{localCouponError}</p>
+                {couponError && (
+                  <p className="mt-2 text-xs text-red-600 font-semibold">{couponError}</p>
                 )}
               </div>
             )}
