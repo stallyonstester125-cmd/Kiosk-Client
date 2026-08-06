@@ -36,7 +36,7 @@ interface CartContextType {
   orderType: "eat-in" | "take-away" | null;
   setOrderType: (type: "eat-in" | "take-away") => void;
   clearOrderType: () => void;
-  placeOrder: (customerName: string, paymentMethod: "cash" | "card", paymentStatus?: "pending" | "paid" | "failed") => Promise<{ success: boolean; data: Record<string, unknown> }>;
+  placeOrder: (customerName: string, paymentMethod: "cash" | "card", paymentStatus?: "pending" | "paid" | "failed", couponCode?: string) => Promise<{ success: boolean; data: Record<string, unknown> }>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -137,7 +137,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const placeOrder = async (
     customerName: string,
     paymentMethod: "cash" | "card" = "cash",
-    paymentStatus?: "pending" | "paid" | "failed"
+    paymentStatus?: "pending" | "paid" | "failed",
+    couponCode?: string
   ) => {
     const { createOrder } = await import("@/lib/api");
 
@@ -160,7 +161,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       customerName,
       items,
       paymentMethod,
-      ...(paymentStatus ? { paymentStatus } : {})
+      ...(paymentStatus ? { paymentStatus } : {}),
+      couponCode
     });
 
     if (response.success) {

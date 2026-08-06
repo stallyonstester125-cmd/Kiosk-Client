@@ -153,6 +153,9 @@ function ConfirmationContent() {
   const orderTotal = searchParams.get("total");
   const orderSubtotal = searchParams.get("subtotal");
   const orderTax = searchParams.get("tax");
+  const couponCode = searchParams.get("couponCode");
+  const discountParam = searchParams.get("discount");
+  const displayDiscount = discountParam ? parseFloat(discountParam) : 0;
 
   useEffect(() => {
     if (!clearedRef.current) {
@@ -235,6 +238,18 @@ function ConfirmationContent() {
               <span>Subtotal</span>
               <span className="font-medium">{formatPrice(displaySubtotal)}</span>
             </div>
+            {couponCode && (
+              <>
+                <div className="flex justify-between text-zinc-600">
+                  <span>Coupon</span>
+                  <span className="font-bold text-amber-600 uppercase">{couponCode}</span>
+                </div>
+                <div className="flex justify-between text-green-600 font-semibold">
+                  <span>Discount</span>
+                  <span>-{formatPrice(displayDiscount)}</span>
+                </div>
+              </>
+            )}
             <div className="flex justify-between text-zinc-600">
               <span>Tax</span>
               <span className="font-medium">{formatPrice(displayTax)}</span>

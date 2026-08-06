@@ -73,6 +73,7 @@ export interface CreateOrderRequest {
     items: OrderItemInput[];
     paymentMethod?: "cash" | "card";
     paymentStatus?: "pending" | "paid" | "failed";
+    couponCode?: string;
 }
 
 export interface CreateOrderResponse {
@@ -114,6 +115,7 @@ export interface CreatePaymentIntentRequest {
     orderType: "eat-in" | "take-away";
     customerName: string;
     items: OrderItemInput[];
+    couponCode?: string;
 }
 
 export interface CreatePaymentIntentResponse {
@@ -137,4 +139,34 @@ export async function createPaymentIntent(
     }
     const json = await res.json();
     return json.data as CreatePaymentIntentResponse;
+}
+
+export interface ValidateCouponResponse {
+    valid: boolean;
+    reason?: string;
+    discountAmount: number;
+    updatedSubtotal: number;
+    updatedTax: number;
+    updatedTotal: number;
+    coupon?: any;
+}
+
+export async function validateCoupon(
+    code: string,
+    subtotal: number,
+    customerName?: string
+): Promise<ValidateCouponResponse> {
+    const res = await fetch(`${API_BASE_URL}/coupons/validate`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ code, subtotal, customerName }),
+    });
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to validate coupon");
+    }
+    const json = await res.json();
+    return json.data as ValidateCouponResponse;
 }

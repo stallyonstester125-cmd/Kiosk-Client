@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Ticket } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
@@ -35,6 +35,12 @@ export default function CartPage() {
   const [stripeAmount, setStripeAmount] = useState(0);
   const [pendingCustomerName, setPendingCustomerName] = useState("");
 
+  // Coupon state
+  const [couponCodeInput, setCouponCodeInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [localCouponError, setLocalCouponError] = useState<string | null>(null);
+
   const handleQuantityChange = (id: string, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(id);
@@ -53,6 +59,53 @@ export default function CartPage() {
     setShowNameModal(true);
   };
 
+  const handleApplyCoupon = async (code: string, isSilent = false) => {
+    if (!code.trim()) return;
+    if (!isSilent) {
+      setIsApplyingCoupon(true);
+      setLocalCouponError(null);
+    }
+    try {
+      const { validateCoupon } = await import("@/lib/api");
+      const validation = await validateCoupon(code.trim(), subtotal);
+      if (validation.valid) {
+        setAppliedCoupon(validation);
+        setLocalCouponError(null);
+      } else {
+        setAppliedCoupon(null);
+        if (!isSilent) {
+          setLocalCouponError(validation.reason || "Invalid coupon code");
+        }
+      }
+    } catch (err) {
+      setAppliedCoupon(null);
+      if (!isSilent) {
+        setLocalCouponError(err instanceof Error ? err.message : "Failed to validate coupon");
+      }
+    } finally {
+      if (!isSilent) {
+        setIsApplyingCoupon(false);
+      }
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCodeInput("");
+    setLocalCouponError(null);
+  };
+
+  const subtotal = getSubtotal();
+
+  // Revalidate coupon on subtotal changes (quantities altered)
+  useEffect(() => {
+    if (appliedCoupon && subtotal > 0) {
+      void handleApplyCoupon(appliedCoupon.coupon.code, true);
+    } else if (subtotal === 0 && appliedCoupon) {
+      handleRemoveCoupon();
+    }
+  }, [subtotal]);
+
   /** Called by NameEntryModal after the customer enters their name */
   const handleNameSubmit = async (name: string) => {
     if (!orderType) {
@@ -62,11 +115,13 @@ export default function CartPage() {
 
     setOrderError(null);
 
+    const couponCode = appliedCoupon?.coupon?.code || undefined;
+
     if (paymentMethod === "cash") {
-      // ── CASH FLOW: unchanged behaviour ──────────────────────────────────
+      // ── CASH FLOW ───────────────────────────────────────────────────────
       setIsPlacingOrder(true);
       try {
-        const response = await placeOrder(name, "cash");
+        const response = await placeOrder(name, "cash", undefined, couponCode);
         if (response.success) {
           const data = response.data as {
             _id: string;
@@ -74,9 +129,11 @@ export default function CartPage() {
             total: number;
             subtotal: number;
             tax: number;
+            coupon_code?: string;
+            discount_amount?: number;
           };
           router.push(
-            `/confirmation?orderId=${data._id}&orderNumber=${data.orderNumber}&total=${data.total}&subtotal=${data.subtotal}&tax=${data.tax}`
+            `/confirmation?orderId=${data._id}&orderNumber=${data.orderNumber}&total=${data.total}&subtotal=${data.subtotal}&tax=${data.tax}&couponCode=${data.coupon_code || ""}&discount=${data.discount_amount || 0}`
           );
         } else {
           setOrderError("Failed to place order. Please try again.");
@@ -105,6 +162,7 @@ export default function CartPage() {
           orderType,
           customerName: name,
           items: cartItems,
+          couponCode,
         });
 
         setPendingCustomerName(name);
@@ -126,8 +184,9 @@ export default function CartPage() {
   const handlePaymentSuccess = async () => {
     setShowStripeModal(false);
     setIsPlacingOrder(true);
+    const couponCode = appliedCoupon?.coupon?.code || undefined;
     try {
-      const response = await placeOrder(pendingCustomerName, "card", "paid");
+      const response = await placeOrder(pendingCustomerName, "card", "paid", couponCode);
       if (response.success) {
         const data = response.data as {
           _id: string;
@@ -135,9 +194,11 @@ export default function CartPage() {
           total: number;
           subtotal: number;
           tax: number;
+          coupon_code?: string;
+          discount_amount?: number;
         };
         router.push(
-          `/confirmation?orderId=${data._id}&orderNumber=${data.orderNumber}&total=${data.total}&subtotal=${data.subtotal}&tax=${data.tax}`
+          `/confirmation?orderId=${data._id}&orderNumber=${data.orderNumber}&total=${data.total}&subtotal=${data.subtotal}&tax=${data.tax}&couponCode=${data.coupon_code || ""}&discount=${data.discount_amount || 0}`
         );
       } else {
         setOrderError("Payment succeeded but order creation failed. Please contact staff.");
@@ -157,14 +218,15 @@ export default function CartPage() {
     setPendingCustomerName("");
   };
 
-  const subtotal = getSubtotal();
-  const tax = getTax();
-  const total = getTotal();
+  const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const tax = appliedCoupon ? appliedCoupon.updatedTax : getTax();
+  const total = appliedCoupon ? appliedCoupon.updatedTotal : getTotal();
 
   const formatPrice = (price: number) => `$${price.toFixed(2)}`;
 
   return (
     <div className="min-h-screen w-screen bg-[#FFF8F0]">
+      {/* Header */}
       <div
         className="w-full h-[63px] bg-[#FFA600] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center justify-between px-6"
       >
@@ -175,7 +237,9 @@ export default function CartPage() {
         >
           <ArrowLeft className="w-6 h-6 text-white" />
         </button>
-        <h1 className="text-xl font-bold text-white tracking-widest">LOGO</h1>
+        <h1 className="text-xl font-bold text-white tracking-widest flex items-center gap-2">
+          QUICKCRAVE
+        </h1>
         <CartIcon
           iconType="close"
           onClick={handleAddMoreItems}
@@ -261,46 +325,104 @@ export default function CartPage() {
           </button>
 
           {state.items.length > 0 && (
-            <>
-              <div className="mt-6 p-4 bg-white rounded-xl shadow-md">
-                <h3 className="font-bold text-zinc-900 mb-4">Payment Method</h3>
-                <div className="space-y-3">
-                  <label className="flex items-center gap-3 p-3 border border-zinc-200 rounded-lg cursor-pointer hover:bg-zinc-50 touch-manipulation">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="cash"
-                      checked={paymentMethod === "cash"}
-                      onChange={() => setPaymentMethod("cash")}
-                      className="w-5 h-5 text-amber-500 border-zinc-300 focus:ring-amber-500"
-                    />
-                    <span className="font-medium text-zinc-900">Cash</span>
-                  </label>
-                  <label className="flex items-center gap-3 p-3 border border-amber-300 rounded-lg cursor-pointer bg-amber-50 hover:bg-amber-100 touch-manipulation">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="card"
-                      checked={paymentMethod === "card"}
-                      onChange={() => setPaymentMethod("card")}
-                      className="w-5 h-5 text-amber-500 border-zinc-300 focus:ring-amber-500"
-                    />
-                    <span className="font-medium text-zinc-900">Card</span>
-                  </label>
-                </div>
+            <div className="mt-6 p-4 bg-white rounded-xl shadow-md">
+              <h3 className="font-bold text-zinc-900 mb-4">Payment Method</h3>
+              <div className="space-y-3">
+                <label className="flex items-center gap-3 p-3 border border-zinc-200 rounded-lg cursor-pointer hover:bg-zinc-50 touch-manipulation">
+                  <input
+                    type="radio"
+                    name="payment"
+                    value="cash"
+                    checked={paymentMethod === "cash"}
+                    onChange={() => setPaymentMethod("cash")}
+                    className="w-5 h-5 text-amber-500 border-zinc-300 focus:ring-amber-500"
+                  />
+                  <span className="font-medium text-zinc-900">Cash</span>
+                </label>
+                <label className="flex items-center gap-3 p-3 border border-amber-300 rounded-lg cursor-pointer bg-amber-50 hover:bg-amber-100 touch-manipulation">
+                  <input
+                    type="radio"
+                    name="payment"
+                    value="card"
+                    checked={paymentMethod === "card"}
+                    onChange={() => setPaymentMethod("card")}
+                    className="w-5 h-5 text-amber-500 border-zinc-300 focus:ring-amber-500"
+                  />
+                  <span className="font-medium text-zinc-900">Card</span>
+                </label>
               </div>
-            </>
+            </div>
           )}
         </div>
 
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl shadow-md p-6 sticky top-24 h-fit">
+            {/* Promo Code section */}
+            {state.items.length > 0 && (
+              <div className="mb-6 pb-6 border-b border-zinc-200">
+                <h4 className="font-bold text-zinc-900 mb-3 text-sm flex items-center gap-1.5">
+                  <Ticket className="w-4 h-4 text-amber-600" />
+                  PROMO CODE
+                </h4>
+                {!appliedCoupon ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponCodeInput}
+                      onChange={(e) => {
+                        setCouponCodeInput(e.target.value.toUpperCase());
+                        setLocalCouponError(null);
+                      }}
+                      placeholder="Enter code"
+                      className="flex-1 px-3 py-2 border border-zinc-200 rounded-lg text-sm bg-white text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500 uppercase font-semibold"
+                    />
+                    <button
+                      onClick={() => handleApplyCoupon(couponCodeInput)}
+                      disabled={!couponCodeInput.trim() || isApplyingCoupon}
+                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-zinc-200 disabled:text-zinc-400 text-black font-semibold rounded-lg text-sm transition-colors"
+                    >
+                      {isApplyingCoupon ? "..." : "Apply"}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div>
+                        <p className="text-xs font-semibold text-green-800 uppercase tracking-wider">Coupon Applied</p>
+                        <p className="font-bold text-green-900 text-sm mt-0.5">{appliedCoupon.coupon.code}</p>
+                        <p className="text-xs text-green-700 mt-0.5">
+                          {appliedCoupon.coupon.discount_type === "percentage"
+                            ? `${appliedCoupon.coupon.percentage}% Discount`
+                            : `$${appliedCoupon.coupon.fixed_amount.toFixed(2)} Discount`}
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleRemoveCoupon}
+                        className="text-xs font-bold text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {localCouponError && (
+                  <p className="mt-2 text-xs text-red-600 font-semibold">{localCouponError}</p>
+                )}
+              </div>
+            )}
+
             <h3 className="font-bold text-zinc-900 mb-4">ORDER SUMMARY</h3>
             <div className="space-y-3 mb-4">
               <div className="flex justify-between text-zinc-600">
                 <span>Subtotal</span>
                 <span className="font-medium">{formatPrice(subtotal)}</span>
               </div>
+              {appliedCoupon && (
+                <div className="flex justify-between text-green-600 font-semibold">
+                  <span>Coupon Discount ({appliedCoupon.coupon.code})</span>
+                  <span>-{formatPrice(discountAmount)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-zinc-600">
                 <span>Tip</span>
                 <span className="font-medium">{formatPrice(0)}</span>
